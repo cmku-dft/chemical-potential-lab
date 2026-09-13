@@ -1,3 +1,4 @@
+import {maskLineArtwork} from './occlusion.mjs';
 // Orthographic 3D geometry: equal physical units on every axis, no data distortion.
 import {ticks,tickStep,tickLabel,roundRange,formulaSVG} from './display.mjs';
 import {buildPhaseFaces} from './faces3d.mjs';
@@ -45,13 +46,16 @@ export function render3D(r,{camera=defaultCamera,selected=null,own=false,formula
   };
   const line=(a,b,stroke='#d1dfe6',width=1,dash='')=>`<line x1="${project(a)[0]}" y1="${project(a)[1]}" x2="${project(b)[0]}" y2="${project(b)[1]}" stroke="${stroke}" stroke-width="${width}" ${dash?`stroke-dasharray="${dash}"`:''}/>`;
   let svg=`<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 510" role="img" aria-label="Rotatable 3D chemical-potential stability diagram for ${esc(formula)}"><title>${esc(formula)} — 3D chemical-potential stability</title><desc>X: ${r.x}, Y: ${r.y}, Z: ${r.z}. All axes in eV/atom with equal physical scales. ${own?'User-supplied':'Illustrative'} energies. The allowed set lies on the host equality plane.</desc><rect width="860" height="510" fill="white"/>`;
+  const surfaces=(camera.showHost&&host.length===3)?[{vertices:host}]:r.vertices.length>=3?[{vertices:r.vertices.map(mu)}]:[];
+  let frame='';
   const corner=Object.fromEntries(axes.map((e,i)=>[e,ranges[i][0]]));
   // Wireframe extent box provides depth without hiding the phase region.
   for(let i=0;i<3;i++)for(let mask=0;mask<4;mask++){
     const a={...corner},others=[0,1,2].filter(j=>j!==i);others.forEach((j,k)=>a[axes[j]]=ranges[j][(mask>>k)&1]);
-    const b={...a,[axes[i]]:ranges[i][1]};svg+=line(a,b,'#d9e4e9',1,'4 5');
+    const b={...a,[axes[i]]:ranges[i][1]};frame+=line(a,b,'#d9e4e9',1,'4 5');
   }
-  if(camera.showHost&&host.length===3){svg+=`<polygon points="${host.map(point).join(' ')}" fill="#dce7f4" fill-opacity="${(camera.opacity??.75)*.5}" stroke="#93a9c0" stroke-width="1.2" stroke-dasharray="5 4"/>`;
+  svg+=`<g data-frame="true">${frame}</g>`;
+  if(camera.showHost&&host.length===3){svg+=`<polygon points="${host.map(point).join(' ')}" fill="#dce7f4" fill-opacity="${camera.opacity??.75}" stroke="#93a9c0" stroke-width="1.2" stroke-dasharray="5 4"/>`;
     // Draw each nonconstant phase boundary where it intersects the host triangle.
     for(const q of r.constraints.filter(c=>c.kind==='phase')){const pts=[];
       for(let i=0;i<3;i++){const a=host[i],b=host[(i+1)%3],da=q.A*a[r.x]+q.B*a[r.y]-q.C,db=q.A*b[r.x]+q.B*b[r.y]-q.C;
@@ -71,13 +75,13 @@ export function render3D(r,{camera=defaultCamera,selected=null,own=false,formula
     });
   }
   const axisColors=['#386bb8','#aa6422','#8853a1'];
-  axes.forEach((e,i)=>{const end={...corner,[e]:ranges[i][1]};svg+=line(corner,end,axisColors[i],2);
-    for(const value of ticks(ranges[i],projection.interval)){const p=project({...corner,[e]:value});svg+=`<circle cx="${p[0]}" cy="${p[1]}" r="2" fill="${axisColors[i]}"/>`;svg+=label([p[0]+(i===2?-12:0),p[1]+(i===2?4:18)],tickLabel(value,projection.interval),axisColors[i],12,i===2?'end':'middle');}
-    const p=project(end),o=project(corner),n=Math.hypot(p[0]-o[0],p[1]-o[1])||1;svg+=label([p[0]+32*(p[0]-o[0])/n,p[1]+32*(p[1]-o[1])/n],`${['X','Y','Z'][i]} · Δμ${e}`,axisColors[i],15);
+  axes.forEach((e,i)=>{const end={...corner,[e]:ranges[i][1]};let artwork=line(corner,end,axisColors[i],2);
+    for(const value of ticks(ranges[i],projection.interval)){const p=project({...corner,[e]:value});artwork+=`<circle cx="${p[0]}" cy="${p[1]}" r="2" fill="${axisColors[i]}"/>`;artwork+=label([p[0]+(i===2?-12:0),p[1]+(i===2?4:18)],tickLabel(value,projection.interval),axisColors[i],12,i===2?'end':'middle');}
+    const p=project(end),o=project(corner),n=Math.hypot(p[0]-o[0],p[1]-o[1])||1;artwork+=label([p[0]+32*(p[0]-o[0])/n,p[1]+32*(p[1]-o[1])/n],`${['X','Y','Z'][i]} · Δμ${e}`,axisColors[i],15);svg+=maskLineArtwork(`axis-${i}`,artwork,corner,end,surfaces,projection,camera.opacity??.75);
   });
   for(const [p,t,c] of annotations)svg+=label(p,t,c,13,'middle',true,true);
   vertices.forEach((p,i)=>{const [x,y]=project(p);svg+=`<g data-vertex="${i}" style="cursor:pointer"><circle cx="${x}" cy="${y}" r="12" fill="transparent"/><circle cx="${x}" cy="${y}" r="4.5" fill="white" stroke="#087f78" stroke-width="2"/>${label([x+9,y-10],`V${i+1}`,'#183441',12,'start',true)}</g>`;});
-  if(selected){const s=mu(selected),p=project(s);for(const e of axes)svg+=line(s,{...s,[e]:corner[e]},'#bb7b4d',1,'3 4');svg+=`<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="#c25b26" stroke="white" stroke-width="2" pointer-events="none"/>`;}
+  if(selected){const s=mu(selected),p=project(s);for(const [i,e]of axes.entries()){const end={...s,[e]:corner[e]};svg+=maskLineArtwork(`guide-${i}`,line(s,end,'#bb7b4d',1,'3 4'),s,end,surfaces,projection,camera.opacity??.75);}svg+=`<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="#c25b26" stroke="white" stroke-width="2" pointer-events="none"/>`;}
   svg+=label([430,491],`${camera.showHost?'Pale plane: host equality + elemental limits   ·   ':''}Teal: allowed region`,'#5f7480',13);
   if(!vertices.length)svg+=label([430,245],'No feasible stability region','#a45a27',21);
   if(projection.edgeOn)svg+=label([430,465],'Edge-on view — rotate to select an interior point','#a45a27',13);
