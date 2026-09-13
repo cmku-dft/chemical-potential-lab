@@ -1,6 +1,6 @@
 import {maskLineArtwork} from './occlusion.mjs';
 // Orthographic 3D geometry: equal physical units on every axis, no data distortion.
-import {ticks,tickStep,tickLabel,roundRange,formulaSVG} from './display.mjs';
+import {potentialSVG,ticks,tickStep,tickLabel,roundRange,formulaSVG} from './display.mjs';
 import {buildPhaseFaces} from './faces3d.mjs';
 import {renderPhaseSpace} from './render-faces.mjs';
 export const defaultCamera={azimuth:-135,elevation:25,zoom:1,showHost:false,showFaces:true,bounds:null,opacity:.75,tickInterval:0,equalScale:true};
@@ -42,7 +42,7 @@ export function render3D(r,{camera=defaultCamera,selected=null,own=false,formula
     let at=p;
     if(avoid){const candidates=[[0,0],[0,-20],[0,20],[22,-20],[-22,-20],[22,20],[-22,20],[0,-40],[0,40],[40,-40],[-40,-40]];for(const [dx,dy]of candidates){const q=[p[0]+dx,p[1]+dy],b=box(q);if(!occupied.some(a=>b[0]<a[0]+a[2]&&b[0]+b[2]>a[0]&&b[1]<a[1]+a[3]&&b[1]+b[3]>a[1])){at=q;break;}}}
     occupied.push(box(at));const leader=at===p?'':`<line x1="${p[0]}" y1="${p[1]}" x2="${at[0]}" y2="${at[1]-size/2}" stroke="${fill}" opacity=".4"/>`;
-    return `${leader}<text x="${at[0]}" y="${at[1]}" text-anchor="${anchor}" font-family="system-ui" font-size="${size}" fill="${fill}" stroke="white" stroke-width="4" paint-order="stroke">${chemical?formulaSVG(t):esc(t)}</text>`;
+    return `${leader}<text x="${at[0]}" y="${at[1]}" text-anchor="${anchor}" font-family="system-ui" font-size="${size}" fill="${fill}" stroke="white" stroke-width="4" paint-order="stroke">${chemical?formulaSVG(t):potentialSVG(t)}</text>`;
   };
   const line=(a,b,stroke='#d1dfe6',width=1,dash='')=>`<line x1="${project(a)[0]}" y1="${project(a)[1]}" x2="${project(b)[0]}" y2="${project(b)[1]}" stroke="${stroke}" stroke-width="${width}" ${dash?`stroke-dasharray="${dash}"`:''}/>`;
   let svg=`<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 510" role="img" aria-label="Rotatable 3D chemical-potential stability diagram for ${esc(formula)}"><title>${esc(formula)} — 3D chemical-potential stability</title><desc>X: ${r.x}, Y: ${r.y}, Z: ${r.z}. All axes in eV/atom with equal physical scales. ${own?'User-supplied':'Illustrative'} energies. The allowed set lies on the host equality plane.</desc><rect width="860" height="510" fill="white"/>`;

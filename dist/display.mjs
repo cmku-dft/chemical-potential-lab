@@ -5,6 +5,12 @@ const format=(s,wrap)=>normalizeFormula(s).split(/(\d+(?:\.\d+)?|\.\d+)/g).map((
 export const formulaHTML=s=>format(s,n=>`<sub>${n}</sub>`);
 export const formulaSVG=s=>format(s,n=>`<tspan baseline-shift="sub" font-size="75%">${n}</tspan>`);
 export const formulaText=s=>normalizeFormula(s).replace(/\d/g,c=>'₀₁₂₃₄₅₆₇₈₉'[Number(c)]);
+// Format the element attached to μ without subscripting stoichiometric
+// coefficients, numerical values, or the entire chemical-potential symbol.
+const potential=(s,wrap)=>String(s).split(/(μ[A-Z][a-z]?)/g).map((part,i)=>i%2?'μ'+wrap(part.slice(1)):escapeText(part)).join('');
+export const potentialHTML=s=>potential(s,e=>`<sub>${e}</sub>`);
+export const potentialSVG=s=>potential(s,e=>`<tspan baseline-shift="sub" font-size="75%">${e}</tspan>`);
+export const potentialText=s=>String(s).replace(/μ([A-Z][a-z]?)/g,'μ_$1');
 export function niceStep(raw){
   if(!(raw>0)||!Number.isFinite(raw))return .5;
   const power=10**Math.floor(Math.log10(raw)),fraction=raw/power;

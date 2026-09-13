@@ -1,5 +1,5 @@
 import {maskLineArtwork} from './occlusion.mjs';
-import {ticks,tickLabel,formulaSVG,formulaText} from './display.mjs';
+import {potentialSVG,potentialText,ticks,tickLabel,formulaSVG,formulaText} from './display.mjs';
 import {pickFace} from './faces3d.mjs';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const palette=['#65a7de','#60c5cf','#afa7de','#7ac9ad','#e6be77','#91b5d8','#d99bb3','#9ac775'];
@@ -18,7 +18,7 @@ export function renderPhaseSpace(r,space,p,{selected,own,formula,opacity=.75}){
       if(!occupied.some(b=>box[0]<b[0]+b[2]&&box[0]+box[2]>b[0]&&box[1]<b[1]+b[3]&&box[1]+box[3]>b[1])){x=nx;y=ny;break;}
     }
     occupied.push([x-(anchor==='middle'?width/2:anchor==='end'?width:0)-3,y-size-3,width+6,size+6]);
-    return `${avoid&&(x!==pos[0]||y!==pos[1])?`<line x1="${pos[0]}" y1="${pos[1]}" x2="${x}" y2="${y-5}" stroke="${fill}" opacity=".45"/>`:''}<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="system-ui" font-size="${size}" fill="${fill}" stroke="white" stroke-width="3" paint-order="stroke" pointer-events="none">${chemical?formulaSVG(value):esc(value)}</text>`;
+    return `${avoid&&(x!==pos[0]||y!==pos[1])?`<line x1="${pos[0]}" y1="${pos[1]}" x2="${x}" y2="${y-5}" stroke="${fill}" opacity=".45"/>`:''}<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="system-ui" font-size="${size}" fill="${fill}" stroke="white" stroke-width="3" paint-order="stroke" pointer-events="none">${chemical?formulaSVG(value):potentialSVG(value)}</text>`;
   };
   let svg=`<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 510" role="img" aria-label="Interactive 3D phase faces for ${esc(formula)}"><title>${esc(formula)} — calculated 3D phase faces</title><desc>X: ${r.x}, Y: ${r.y}, Z: ${r.z}. All axes in eV/atom with equal physical scales. Pink is the host equilibrium face. Other colored faces are stable parts of competing-phase equilibrium planes, clipped to display bounds. ${own?'User-supplied':'Illustrative'} energies.</desc><rect width="860" height="510" fill="white"/>`;
   let frame='';
@@ -34,7 +34,7 @@ export function renderPhaseSpace(r,space,p,{selected,own,formula,opacity=.75}){
   // within each facing group cannot overlap except at a common boundary.
   const sorted=[...space.faces].sort((a,b)=>(facing(a)>0)-(facing(b)>0)||p.depth(center(a))-p.depth(center(b)));
   for(const face of sorted){
-    svg+=`<polygon data-phase-face="${face.id}" points="${face.vertices.map(point).join(' ')}" fill="${faceColor(face)}" fill-opacity="${opacity}" stroke="${face.kind==='host'?'#96246f':'#426684'}" stroke-width="${face.kind==='host'?2.6:1.2}" stroke-linejoin="round"><title>${esc(formulaText(labelOf(face)))}: ${esc(equation(face.rows[0]))}</title></polygon>`;
+    svg+=`<polygon data-phase-face="${face.id}" points="${face.vertices.map(point).join(' ')}" fill="${faceColor(face)}" fill-opacity="${opacity}" stroke="${face.kind==='host'?'#96246f':'#426684'}" stroke-width="${face.kind==='host'?2.6:1.2}" stroke-linejoin="round"><title>${esc(formulaText(labelOf(face)))}: ${esc(potentialText(equation(face.rows[0])))}</title></polygon>`;
   }
   // A convex surface can be viewed from either side. Labels and markers appear
   // only where the host/face is actually the nearest physical surface.

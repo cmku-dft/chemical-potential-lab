@@ -45,6 +45,8 @@ Run `node --test engine.test.mjs plot3d.test.mjs faces3d.test.mjs display.test.m
 
 CSV exports include the energy provenance flag, target formula, all Δμ values, supplied references, absolute μ when references are available, and active boundaries. Session exports additionally preserve the full phase dataset and normalization settings. Save both the session and condition CSV for reproducibility.
 
+Chemical-potential element symbols use subscripts in equations, selected values, tables, and all 2D/3D axis labels. SVG exports retain those subscripts. Axis menus select plain element symbols, with the formatted potential beside each menu; plain-text tooltips use notation such as Δμ_O.
+
 The page optionally exposes two WebMCP tools (`read_stability_diagram` and `select_chemical_potential_point`) when supported by the browser. They use the same state and validation as the UI.
 
 See `docs/chesta-inspection.md` for the limited workflow inspection. No Chesta executable, proprietary code, sample data, translation strings, or visual assets are included in this project.
