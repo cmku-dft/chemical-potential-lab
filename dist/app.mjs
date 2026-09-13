@@ -92,6 +92,22 @@ $('plot').addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)ret
 $('plot').addEventListener('pointerup',e=>{if(!drag||e.pointerId!==drag.id)return;discardClick=drag.moved;const vertex=drag.vertex;if(!drag.moved&&vertex!==undefined){choose(result.vertices[Number(vertex)],`V${Number(vertex)+1}`);discardClick=true;}drag=null;if($('plot').hasPointerCapture(e.pointerId))$('plot').releasePointerCapture(e.pointerId);});
 $('plot').addEventListener('pointercancel',()=>{drag=null;discardClick=false;});
 $('plot').addEventListener('keydown',e=>{if(view!=='3d')return;const delta={ArrowLeft:[-5,0],ArrowRight:[5,0],ArrowUp:[0,5],ArrowDown:[0,-5]}[e.key];if(delta){e.preventDefault();camera.azimuth=((camera.azimuth+delta[0]+540)%360)-180;camera.elevation=Math.max(-85,Math.min(85,camera.elevation+delta[1]));}else if(['+','=','-','_'].includes(e.key)){e.preventDefault();camera.zoom=Math.max(.5,Math.min(2,camera.zoom+(['-','_'].includes(e.key)?-.1:.1)));}else return;syncCamera();drawPlot();});
+let figureVariant='prose';
+function showPaperFigure(kind='prose'){
+  if(!['prose','table1'].includes(kind))return;
+  figureVariant=kind;const path=`paper/znsb2o4-hse-${kind}.svg`;
+  $('figure-prose').setAttribute('aria-pressed',String(kind==='prose'));
+  $('figure-table1').setAttribute('aria-pressed',String(kind==='table1'));
+  $('figure-energy-note').textContent=kind==='prose'?'Host ΔHf = −10.43 eV/formula from the text; the wider pink region is visually closer to the published Fig. 1.':'Host ΔHf = −10.25 eV/formula from Table 1; the same Table 2 competitors give a narrower pink region.';
+  $('figure-image-error').hidden=true;$('figure-image').src=path;
+  $('figure-full-size').href=path;$('figure-download').href=path;
+  if(!$('figure-dialog').open)$('figure-dialog').showModal();
+}
+$('show-figure-faces').onclick=()=>showPaperFigure(figureVariant);
+$('figure-prose').onclick=()=>showPaperFigure('prose');
+$('figure-table1').onclick=()=>showPaperFigure('table1');
+$('figure-image').onerror=()=>{$('figure-image-error').hidden=false;};
+$('figure-load-inputs').onclick=()=>{const key=`ZnSb2O4_HSE_${figureVariant}`;$('example').value=key;loadExample(key);$('figure-dialog').close();$('plot').scrollIntoView({block:'center'});$('plot').focus({preventScroll:true});};
 populate(model);syncView();calculate();
 const requestedExample=new URLSearchParams(location.search).get('example');if(requestedExample&&Object.hasOwn(examples,requestedExample)){$('example').value=requestedExample;loadExample(requestedExample);}
 const context=document.modelContext;if(context?.registerTool){const lifecycle=new AbortController();for(const tool of [{name:'read_stability_diagram',title:'Read stability results',description:'Read the current calculated stability region and selected chemical potentials. Reports whether inputs have changed.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>({dirty,view,axes:{x:result.x,y:result.y,z:result.z},target:model.target.formula,dimension:result.dimension,vertices:result.vertices.map(p=>result.chemicalPotentials(p)),selected:selected?result.chemicalPotentials(selected):null})},{name:'select_chemical_potential_point',title:'Select a chemical-potential condition',description:'Select a feasible point in the current diagram using the same validation as the numeric point controls.',inputSchema:{type:'object',properties:{x:{type:'number'},y:{type:'number'}},required:['x','y'],additionalProperties:false},annotations:{readOnlyHint:false},execute:input=>{if(!input||typeof input.x!=='number'||typeof input.y!=='number'||!choose([input.x,input.y]))throw Error('Point is invalid, outside the region, or inputs require recalculation.');return {selected:result.chemicalPotentials(selected)};}}])try{Promise.resolve(context.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{});}catch{}window.addEventListener('pagehide',()=>lifecycle.abort(),{once:true});}
