@@ -62,3 +62,12 @@ export const examples={
   SrTiO3:{mode:'formation',eliminated:'O',refs:{Sr:'',Ti:'',O:''},target:{formula:'SrTiO3',energy:-16,basis:'formula',units:1},phases:[['SrO',-6],['TiO2',-9],['Ti2O3',-14],['Sr2TiO4',-22],['SrO2',-7]].map(([formula,energy])=>({formula,energy,basis:'formula',units:1,enabled:true}))},
   Ba3V2O8:{mode:'formation',eliminated:'O',refs:{Ba:'',V:'',O:''},target:{formula:'Ba3V2O8',energy:-36,basis:'formula',units:1},phases:[['BaO',-5.5],['V2O5',-15],['VO2',-6],['BaV2O6',-23],['Ba2V2O7',-29]].map(([formula,energy])=>({formula,energy,basis:'formula',units:1,enabled:true}))}
 };
+
+// Published HSE (alpha = 0.48), DOI 10.1039/D3CP01470C.
+// The host energy differs between Table 1 and the paragraph discussing Fig. 1.
+for(const [key,energy,location] of [['ZnSb2O4_HSE_table1',-10.25,'Table 1'],['ZnSb2O4_HSE_prose',-10.43,'main text']]) {
+  examples[key]={mode:'formation',axes:['Sb','O','Zn'],eliminated:'Zn',refs:{Zn:'',Sb:'',O:''},
+    sourceNote:`ZnSb2O4 paper, HSE alpha = 0.48: host ${energy} eV/formula from ${location}; ZnO -3.35, Sb2O3 -6.82, Sb2O5 -10.28 eV/formula from Table 2. The paper lists two different host energies. These inputs do not reproduce the stated oxygen limits of 0 and -0.79 eV. Elemental reference energies are left blank because this reconstruction uses formation enthalpies.`,
+    target:{formula:'ZnSb2O4',energy,basis:'formula',units:1},
+    phases:[['ZnO',-3.35],['Sb2O3',-6.82],['Sb2O5',-10.28]].map(([formula,energy])=>({formula,energy,basis:'formula',units:1,enabled:true}))};
+}

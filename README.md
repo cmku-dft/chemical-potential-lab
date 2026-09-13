@@ -56,3 +56,15 @@ Switch from 2D to 3D above the diagram. The same allowed polygon is embedded in 
 Click a 3D vertex or the shaded plane to inspect chemical potentials. Picking uses the inverse orthographic projection onto the host plane, then the same feasibility check as 2D. Edge-on views reject ambiguous plane picks. All axes share one physical eV scale. CSV values are independent of camera and axis order; SVG exports the active view. Sessions save the axis order, view, camera, and selected condition, while older 2D sessions remain compatible.
 
 The additional projection tests cover all six axis permutations in both examples, point picking at varied camera angles, equal axis scales, edge-on ambiguity, and rendering of empty and degenerate regions.
+
+## ZnSb2O4 paper reconstruction
+
+Two published-HSE presets reproduce the Fig. 1 topology from Charoenphon et al., PCCP 25, 19116-19125 (2023), DOI 10.1039/D3CP01470C. Both use the Table 2 HSE alpha=0.48 formation enthalpies in eV per formula: ZnO -3.35, Sb2O3 -6.82, Sb2O5 -10.28. Other Table 2 phases contain extrinsic dopants and do not constrain the undoped Zn-Sb-O ternary.
+
+The host is absent from Table 2. Table 1 gives -10.25 eV while the main text gives -10.43 eV. Both are provided explicitly, with no silent correction. Table 1 gives O-rich A (Zn,Sb,O)=(-1.660,-0.915,-1.690) and O-poor B=(-1.050,0,-2.300) eV. The prose host gives A=(-1.750,-1.140,-1.600), B=(-0.990,0,-2.360). Thus the text's O-rich 0 and O-poor -0.79 eV conditions cannot satisfy this phase set. The prose variant gives a visually broader pink region similar to Fig. 1; the plot alone does not uniquely establish which host input was used.
+
+In each case, the rich bound follows from ZnO+Sb2O5: O <= (-13.63-H)/2, and the poor bound from ZnO+Sb metal: O >= (H+3.35)/3. All values are relative potentials. Absolute reference energies are not required for this reconstruction and are left blank in the presets.
+
+`dist/paper/` contains session inputs, full vertex data, and independently calculated 3D-face + 2D-projection SVGs. The static 3D illustrations show faces of the no-precipitation half-spaces clipped to the plotting window (Sb [-3,0], O [-2.8,-1.2], Zn [-3,-0.6] eV), including the host equality face. The window does not clip the four host vertices. The app's rotatable 3D view shows the host polygon; the linked figure-style SVGs additionally show the surrounding competing-phase faces.
+
+`reproduce_znsb2o4.py` generates the illustrations with NumPy and Matplotlib and independently validates every host-facet vertex against the app solver. The source PDF is neither modified nor bundled. To open the table preset directly, append `?example=ZnSb2O4_HSE_table1` to the app URL; use `ZnSb2O4_HSE_prose` for the alternative.

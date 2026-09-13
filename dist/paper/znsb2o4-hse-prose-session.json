@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "ownEnergies": true,
+  "model": {
+    "mode": "formation",
+    "axes": [
+      "Sb",
+      "O",
+      "Zn"
+    ],
+    "eliminated": "Zn",
+    "refs": {
+      "Zn": "",
+      "Sb": "",
+      "O": ""
+    },
+    "sourceNote": "ZnSb2O4 paper, HSE alpha = 0.48: host -10.43 eV/formula from main text; ZnO -3.35, Sb2O3 -6.82, Sb2O5 -10.28 eV/formula from Table 2. The paper lists two different host energies. These inputs do not reproduce the stated oxygen limits of 0 and -0.79 eV. Elemental reference energies are left blank because this reconstruction uses formation enthalpies.",
+    "target": {
+      "formula": "ZnSb2O4",
+      "energy": -10.43,
+      "basis": "formula",
+      "units": 1
+    },
+    "phases": [
+      {
+        "formula": "ZnO",
+        "energy": -3.35,
+        "basis": "formula",
+        "units": 1,
+        "enabled": true
+      },
+      {
+        "formula": "Sb2O3",
+        "energy": -6.82,
+        "basis": "formula",
+        "units": 1,
+        "enabled": true
+      },
+      {
+        "formula": "Sb2O5",
+        "energy": -10.28,
+        "basis": "formula",
+        "units": 1,
+        "enabled": true
+      }
+    ]
+  },
+  "view": "3d",
+  "camera": {
+    "azimuth": -135,
+    "elevation": 25,
+    "zoom": 1,
+    "showHost": false
+  },
+  "selected": [
+    -1.1400000000000008,
+    -1.5999999999999988
+  ]
+}
