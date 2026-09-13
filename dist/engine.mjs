@@ -1,4 +1,5 @@
 // Independent ternary half-plane solver. Energies are eV per entered formula.
+import {normalizeFormula} from './display.mjs';
 export const ELEMENTS = new Set('H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' '));
 export function number(value, label) {
   if (value === '' || value === null || value === undefined || (typeof value==='string' && !value.trim()) || !Number.isFinite(Number(value))) throw Error(`${label}: enter a finite number.`);
@@ -6,7 +7,7 @@ export function number(value, label) {
 }
 export function parseFormula(formula) {
   if (typeof formula !== 'string' || !formula.trim() || formula.length>200) throw Error('Enter a chemical formula, such as SrTiO3.');
-  const s=formula.trim(); let i=0;
+  const s=normalizeFormula(formula.trim()); let i=0;
   const count=()=>{const m=s.slice(i).match(/^(?:\d+(?:\.\d+)?|\.\d+)/);if(!m)return 1;i+=m[0].length;const n=Number(m[0]);if(!(n>0))throw Error('Stoichiometric coefficients must be positive.');return n;};
   function group(nested=false){const out={};let terms=0;while(i<s.length && s[i]!==')'){
     let part;

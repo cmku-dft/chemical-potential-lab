@@ -41,7 +41,7 @@ Background: [Materials Project chemical-potential diagrams](https://docs.materia
 
 The independent calculation engine is `dist/engine.mjs`; the interface is `dist/app.mjs`, `dist/index.html`, and `dist/style.css`. No build step or dependency installation is required. Serve `dist` over HTTP, for example `python3 -m http.server 8765 --directory dist`, and open localhost:8765. ES modules require an HTTP server rather than opening index.html directly.
 
-Run `node --test engine.test.mjs plot3d.test.mjs faces3d.test.mjs` for the scientific regression suite. It checks analytic SrTiO3 vertices, Ba3V2O8 stoichiometry, invariance under axis elimination, total-energy and per-atom normalization, original 3D inequalities and host conservation, instability, polymorphs, duplicates, degenerate intersections, validation, and 50 seeded feasible ternary systems.
+Run `node --test engine.test.mjs plot3d.test.mjs faces3d.test.mjs display.test.mjs` for the scientific regression suite. It checks analytic SrTiO3 vertices, Ba3V2O8 stoichiometry, invariance under axis elimination, total-energy and per-atom normalization, original 3D inequalities and host conservation, instability, polymorphs, duplicates, degenerate intersections, validation, and 50 seeded feasible ternary systems.
 
 CSV exports include the energy provenance flag, target formula, all Δμ values, supplied references, absolute μ when references are available, and active boundaries. Session exports additionally preserve the full phase dataset and normalization settings. Save both the session and condition CSV for reproducibility.
 
@@ -51,7 +51,7 @@ See `docs/chesta-inspection.md` for the limited workflow inspection. No Chesta e
 
 ## 3D view
 
-Switch to **3D → Phase faces · like Fig. 1**. The default 3D view computes every phase face from the current target and enabled competitor inputs. It works for any ternary system accepted by the solver, including the SrTiO3, Ba3V2O8, and ZnSb2O4 examples. Recalculate after changing energies or phase inclusion.
+Switch to **3D → Host + competing-phase faces**. The default 3D view computes every phase face from the current target and enabled competitor inputs. It works for any ternary system accepted by the solver, including the SrTiO3, Ba3V2O8, and ZnSb2O4 examples. Recalculate after changing energies or phase inclusion.
 
 `faces3d.mjs` independently clips each equilibrium plane against the inequalities of **all** included phases, including the host, and the elemental limits. The resulting facets are the boundary of the intersection of the no-precipitation half-spaces. The host facet is pink and matches the 2D solver's stability polygon. Binary, ternary, and elemental competitors receive separate colors; redundant or unstable phases need not have a finite face. Coplanar duplicate entries are grouped. No proprietary Chesta code or assets are used.
 
@@ -75,4 +75,12 @@ In each case, the rich bound follows from ZnO+Sb2O5: O <= (-13.63-H)/2, and the 
 
 `reproduce_znsb2o4.py` generates the illustrations with NumPy and Matplotlib and independently validates every host-facet vertex against the app solver. The source PDF is neither modified nor bundled. To open the table preset directly, append `?example=ZnSb2O4_HSE_table1` to the app URL; use `ZnSb2O4_HSE_prose` for the alternative.
 
-The **Reference illustrations** button in the paper preset note opens the fixed figure viewer. It is separate from **3D → Phase faces · like Fig. 1**, which calculates live surfaces from the current input system.
+The **Reference illustrations** button in the paper preset note opens the fixed figure viewer. It is separate from **3D → Host + competing-phase faces**, which calculates live surfaces from the current input system.
+
+## General ternary workflow and plot appearance
+
+**New ternary system** starts from an entered formula and formation energy, with no competing phases inherited from an example. Exactly three distinct elements are required; oxide, chalcogenide, nitride, and other ternaries use the same engine. Add competitors and select their energy bases in the existing workspace. DFT total energies remain supported by switching input mode and entering elemental references. Editing a preset identifies the workspace as Custom system. Formulas may contain parentheses, fractional counts, or pasted Unicode subscript digits, which are normalized before parsing.
+
+**Tick interval** uses one zero-anchored interval on every axis in either plot. Auto selects regular steps; explicit choices include 0.50 eV. Very dense manual intervals are increased uniformly, with the effective interval stated next to the controls. Tick formatting avoids negative zero. **Equal eV scale in 2D** is enabled initially, matching the always-equal physical scales in 3D; switching it off permits the 2D view to fill its rectangular plotting area. This controls geometric scaling separately from tick spacing. Rounded 3D axis extents do not alter the display bounds used to clip physical faces or the host stability calculation.
+
+**Face opacity** changes the polygon fill from 0% to 100% in 2D and both 3D modes. Boundaries stay visible. Transparent faces still pick the nearest physical surface; the host-only view or vertex table remains available to select hidden host conditions. Sessions save opacity, tick interval, and equal-scale preferences, and SVG exports preserve fills and subscript labels. Chemical labels in plots use SVG subscript tspans; headings, phase previews, legends and boundary tables use HTML subscripts. Numeric input fields remain editable plain text.
