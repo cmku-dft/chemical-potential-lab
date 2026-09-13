@@ -1,25 +1,36 @@
 // Orthographic 3D geometry: equal physical units on every axis, no data distortion.
-export const defaultCamera={azimuth:-135,elevation:25,zoom:1,showHost:true};
+import {buildPhaseFaces} from './faces3d.mjs';
+import {renderPhaseSpace} from './render-faces.mjs';
+export const defaultCamera={azimuth:-135,elevation:25,zoom:1,showHost:false,showFaces:true,bounds:null};
+const faceCache=new WeakMap();
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const text=(n,d=2)=>Math.abs(n)<.5*10**-d?(0).toFixed(d):n.toFixed(d);
-export function makeProjection(r,camera=defaultCamera){
+export function makeProjection(r,camera=defaultCamera,space=null){
   const axes=[r.x,r.y,r.z],muPoints=r.vertices.map(p=>r.chemicalPotentials(p));
   const host=r.h<=0?axes.map(e=>Object.fromEntries(axes.map(f=>[f,f===e?r.h/r.composition[f]:0]))):[];
   const extentPoints=camera.showHost&&host.length?host:muPoints;
-  const ranges=axes.map(e=>{const values=extentPoints.map(p=>p[e]);if(!values.length)return [-1,0];const lo=Math.min(...values),hi=Math.max(...values);return hi-lo<1e-10?[lo-.25,hi+.25]:[lo,hi];});
+  const ranges=axes.map(e=>{if(space)return space.bounds[e];const values=extentPoints.map(p=>p[e]);if(!values.length)return [-1,0];const lo=Math.min(...values),hi=Math.max(...values);return hi-lo<1e-10?[lo-.25,hi+.25]:[lo,hi];});
   const spans=ranges.map(([lo,hi])=>hi-lo),span=Math.max(.5,...spans),center=ranges.map(([lo,hi])=>(lo+hi)/2);
   const az=camera.azimuth*Math.PI/180,el=camera.elevation*Math.PI/180;
   // Horizontal screen vector and vertical screen vector form an orthonormal camera basis.
   const right=[Math.cos(az),-Math.sin(az),0],up=[Math.sin(az)*Math.sin(el),Math.cos(az)*Math.sin(el),Math.cos(el)];
+  const forward=[-Math.sin(az)*Math.cos(el),-Math.cos(az)*Math.cos(el),Math.sin(el)];
+  const depth=mu=>axes.reduce((s,e,i)=>s+(mu[e]-center[i])*forward[i],0);
   const scale=300/span*camera.zoom;
   const project=mu=>{const p=axes.map((e,i)=>mu[e]-center[i]);return [430+scale*p.reduce((v,n,i)=>v+n*right[i],0),255-scale*p.reduce((v,n,i)=>v+n*up[i],0)];};
   const origin=project(r.chemicalPotentials([0,0])),px=project(r.chemicalPotentials([1,0])),py=project(r.chemicalPotentials([0,1]));
   const u=[px[0]-origin[0],px[1]-origin[1]],v=[py[0]-origin[0],py[1]-origin[1]],det=u[0]*v[1]-u[1]*v[0];
   const edgeOn=Math.abs(det)<1e-6*Math.hypot(...u)*Math.hypot(...v);
   const unproject=([x,y])=>{if(edgeOn)return null;const dx=x-origin[0],dy=y-origin[1];return [(dx*v[1]-dy*v[0])/det,(u[0]*dy-u[1]*dx)/det];};
-  return {axes,ranges,host,project,unproject,edgeOn,scale};
+  return {axes,ranges,host,project,unproject,edgeOn,scale,depth,direction:Object.fromEntries(axes.map((e,i)=>[e,forward[i]]))};
 }
 export function render3D(r,{camera=defaultCamera,selected=null,own=false,formula='',color=()=> '#087f78'}={}){
+  if(camera.showFaces){
+    const key=JSON.stringify([camera.bounds,formula]);let cached=faceCache.get(r);
+    if(!cached||cached.key!==key){cached={key,space:buildPhaseFaces(r,{...(camera.bounds?{bounds:camera.bounds}:{}),formula})};faceCache.set(r,cached);}
+    const space=cached.space,projection=makeProjection(r,camera,space);
+    return {svg:renderPhaseSpace(r,space,projection,{selected,own,formula}),projection,space};
+  }
   const projection=makeProjection(r,camera),{axes,ranges,host,project}=projection;
   const point=p=>project(p).join(','),mu=p=>r.chemicalPotentials(p);
   const occupied=[],annotations=[];

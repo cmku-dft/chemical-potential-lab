@@ -11,7 +11,7 @@ Independent browser prototype for ternary bulk chemical-potential stability diag
 5. Assign each element to the X, Y, and Z axes. All six orderings are supported; assigning an occupied element swaps the two axes. In 2D, Z is eliminated using the host equality. Axis changes preserve the selected physical condition when the inputs are current. Calculate after editing phase data. Click the shaded region or a vertex, or enter the two independent chemical potentials numerically. The vertex table also supports keyboard operation.
 6. Export a selected condition or all vertices to CSV, the chart to SVG, and the complete input session to JSON. Open session restores a saved JSON session. Files are processed in the browser; no data storage or analysis service is involved. Save before closing the page.
 
-All example energies are invented solely to exercise the geometry. The initial phase lists are not established exhaustive phase sets for these materials. The app does not supply validated thermodynamic data.
+The SrTiO3 and Ba3V2O8 example energies are invented solely to exercise the geometry; the explicitly labeled ZnSb2O4 presets use the published HSE values described below. The initial phase lists are not established exhaustive phase sets for these materials. The app does not supply validated thermodynamic data.
 
 ## Equations and implementation
 
@@ -41,7 +41,7 @@ Background: [Materials Project chemical-potential diagrams](https://docs.materia
 
 The independent calculation engine is `dist/engine.mjs`; the interface is `dist/app.mjs`, `dist/index.html`, and `dist/style.css`. No build step or dependency installation is required. Serve `dist` over HTTP, for example `python3 -m http.server 8765 --directory dist`, and open localhost:8765. ES modules require an HTTP server rather than opening index.html directly.
 
-Run `node --test engine.test.mjs plot3d.test.mjs` for the scientific regression suite. It checks analytic SrTiO3 vertices, Ba3V2O8 stoichiometry, invariance under axis elimination, total-energy and per-atom normalization, original 3D inequalities and host conservation, instability, polymorphs, duplicates, degenerate intersections, validation, and 50 seeded feasible ternary systems.
+Run `node --test engine.test.mjs plot3d.test.mjs faces3d.test.mjs` for the scientific regression suite. It checks analytic SrTiO3 vertices, Ba3V2O8 stoichiometry, invariance under axis elimination, total-energy and per-atom normalization, original 3D inequalities and host conservation, instability, polymorphs, duplicates, degenerate intersections, validation, and 50 seeded feasible ternary systems.
 
 CSV exports include the energy provenance flag, target formula, all Δμ values, supplied references, absolute μ when references are available, and active boundaries. Session exports additionally preserve the full phase dataset and normalization settings. Save both the session and condition CSV for reproducibility.
 
@@ -51,11 +51,17 @@ See `docs/chesta-inspection.md` for the limited workflow inspection. No Chesta e
 
 ## 3D view
 
-Switch from 2D to 3D above the diagram. The same allowed polygon is embedded in (ΔμX, ΔμY, ΔμZ) space on the target equilibrium plane; it is not a three-dimensional stability volume. Drag to rotate, adjust rotation/tilt/zoom sliders, or use arrow and +/− keys with the plot focused. Reset view restores the initial camera. The optional full host plane shows the host equality restricted by elemental limits, with competing-phase intersections. Turning it off focuses the view on the allowed region.
+Switch to **3D → Phase faces · like Fig. 1**. The default 3D view computes every phase face from the current target and enabled competitor inputs. It works for any ternary system accepted by the solver, including the SrTiO3, Ba3V2O8, and ZnSb2O4 examples. Recalculate after changing energies or phase inclusion.
 
-Click a 3D vertex or the shaded plane to inspect chemical potentials. Picking uses the inverse orthographic projection onto the host plane, then the same feasibility check as 2D. Edge-on views reject ambiguous plane picks. All axes share one physical eV scale. CSV values are independent of camera and axis order; SVG exports the active view. Sessions save the axis order, view, camera, and selected condition, while older 2D sessions remain compatible.
+`faces3d.mjs` independently clips each equilibrium plane against the inequalities of **all** included phases, including the host, and the elemental limits. The resulting facets are the boundary of the intersection of the no-precipitation half-spaces. The host facet is pink and matches the 2D solver's stability polygon. Binary, ternary, and elemental competitors receive separate colors; redundant or unstable phases need not have a finite face. Coplanar duplicate entries are grouped. No proprietary Chesta code or assets are used.
 
-The additional projection tests cover all six axis permutations in both examples, point picking at varied camera angles, equal axis scales, edge-on ambiguity, and rendering of empty and degenerate regions.
+These surfaces can extend indefinitely toward negative chemical potentials. **Display ranges** supplies an automatic window around the host or custom minimum and maximum Δμ for each element. The box only clips the view: it is never used to calculate the host's stability limits, and artificial box faces are never drawn as physical phases. A message identifies when custom bounds clip the host. The full host vertex table remains available. Range settings follow elements when axes are swapped.
+
+Drag to rotate, use rotation/tilt/zoom sliders, or press arrow and +/− keys with the plot focused. All axes share the same eV scale. Faces are drawn in depth order, with hidden labels and markers suppressed. Click the pink host face or a host vertex to select the defect condition. Clicking another visible face reports all three chemical potentials in a separate inspector; these points generally do not satisfy host equilibrium, so they do not overwrite the host defect condition. Ray/face picking selects the nearest visible physical surface. **Host polygon only** retains the original plane view, including its optional full host plane.
+
+SVG exports the current calculated view with its faces and labels. JSON sessions preserve axes, 3D display mode, display bounds, camera, and selected host condition; older sessions remain compatible. Reset view changes only the camera, and Auto ranges clears custom display bounds.
+
+Regression checks compare the 3D host facet with the independently solved 2D vertices for every example and all six axis permutations. They also check phase-plane conservation, every original inequality, changed/disabled phases, clipped views, duplicates, unstable hosts, point picking and occlusion, and equivalence of formation, per-atom, and raw total-cell energy inputs.
 
 ## ZnSb2O4 paper reconstruction
 
@@ -65,8 +71,8 @@ The host is absent from Table 2. Table 1 gives -10.25 eV while the main text giv
 
 In each case, the rich bound follows from ZnO+Sb2O5: O <= (-13.63-H)/2, and the poor bound from ZnO+Sb metal: O >= (H+3.35)/3. All values are relative potentials. Absolute reference energies are not required for this reconstruction and are left blank in the presets.
 
-`dist/paper/` contains session inputs, full vertex data, and independently calculated 3D-face + 2D-projection SVGs. The static 3D illustrations show faces of the no-precipitation half-spaces clipped to the plotting window (Sb [-3,0], O [-2.8,-1.2], Zn [-3,-0.6] eV), including the host equality face. The window does not clip the four host vertices. The app's rotatable 3D view shows the host polygon; the linked figure-style SVGs additionally show the surrounding competing-phase faces.
+`dist/paper/` contains session inputs, full vertex data, and independently calculated 3D-face + 2D-projection SVGs. The static 3D illustrations show faces of the no-precipitation half-spaces clipped to the plotting window (Sb [-3,0], O [-2.8,-1.2], Zn [-3,-0.6] eV), including the host equality face. The window does not clip the four host vertices. The app's interactive 3D phase-faces view now calculates these same surfaces dynamically from arbitrary current inputs; the linked SVGs remain fixed illustrations.
 
 `reproduce_znsb2o4.py` generates the illustrations with NumPy and Matplotlib and independently validates every host-facet vertex against the app solver. The source PDF is neither modified nor bundled. To open the table preset directly, append `?example=ZnSb2O4_HSE_table1` to the app URL; use `ZnSb2O4_HSE_prose` for the alternative.
 
-The always-visible **Fig. 1 phase faces** button beside the 2D/3D controls opens a large in-app figure viewer, independent of the selected example. Switch between the text-host and Table-1-host reconstructions, open or download the SVG, or explicitly load those inputs into the rotatable 3D editor. The figure viewer labels these as fixed reconstructions so edits in the calculator are not mistaken for updates to the paper illustrations.
+The **Reference illustrations** button in the paper preset note opens the fixed figure viewer. It is separate from **3D → Phase faces · like Fig. 1**, which calculates live surfaces from the current input system.
