@@ -30,7 +30,9 @@ export function solve(model) {
   const composition=parseFormula(model.target.formula), elements=Object.keys(composition);
   if(elements.length!==3)throw Error('The target must contain exactly three distinct elements.');
   const eliminated=model.eliminated||elements[2];if(!elements.includes(eliminated))throw Error('Eliminated element must belong to the target.');
-  const [x,y]=elements.filter(e=>e!==eliminated), z=eliminated, a=composition[x],b=composition[y],c=composition[z];
+  const axes=model.axes??[...elements.filter(e=>e!==eliminated),eliminated];
+  if(!Array.isArray(axes)||axes.length!==3||new Set(axes).size!==3||axes.some(e=>!elements.includes(e)))throw Error('Assign each target element to exactly one of X, Y, and Z.');
+  const [x,y,z]=axes, a=composition[x],b=composition[y],c=composition[z];
   const h=energyPerFormula(model.target,model.mode,model.refs||{},composition);
   if(!Array.isArray(model.phases)||model.phases.length>150)throw Error('Enter at most 150 competing phases.');
   const constraints=[];
