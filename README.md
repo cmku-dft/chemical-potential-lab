@@ -1,6 +1,6 @@
 # Chemical Potential Lab
 
-Independent browser prototype for ternary bulk chemical-potential stability diagrams and DFT defect formation-energy workflows. Start with SrTiO3 or Ba3V2O8, then replace all illustrative data with a consistent phase dataset.
+Independent browser prototype for binary and ternary bulk chemical-potential stability diagrams and DFT defect formation-energy workflows. Start with ZnO, ZnF2, In2O3, SrTiO3 or Ba3V2O8, then replace all illustrative data with a consistent phase dataset.
 
 ## Open the app
 
@@ -46,10 +46,23 @@ The workflow follows [GitHub’s Pages publishing documentation](https://docs.gi
 2. Choose formation energies/enthalpies or DFT total energies. Each row independently supports eV per entered formula, eV per atom, or eV per cell. For cell energies, enter the number of the **entered formulas** in that cell. Changing the basis reinterprets the entered number rather than converting it.
 3. Total energies require elemental reference energies in eV/atom. For O, supply half the consistently calculated O2 energy, including any chosen reference correction. Formation-energy mode can optionally use references to report absolute chemical potentials.
 4. Add every relevant competing phase, including binary and ternary compounds and polymorphs. Unchecked phases are excluded; elemental precipitation constraints remain included.
-5. Assign each element to the X, Y, and Z axes. All six orderings are supported; assigning an occupied element swaps the two axes. In 2D, Z is eliminated using the host equality. Axis changes preserve the selected physical condition when the inputs are current. Calculate after editing phase data. Click the shaded region or a vertex, or enter the two independent chemical potentials numerically. The vertex table also supports keyboard operation.
+5. For ternaries, assign each element to the X, Y, and Z axes. All six orderings are supported; assigning an occupied element swaps the two axes. In 2D, Z is eliminated using the host equality. Axis changes preserve the selected physical condition when the inputs are current. Calculate after editing phase data. Click the shaded region or a vertex, or enter the two independent chemical potentials numerically. The vertex table also supports keyboard operation.
 6. Export a selected condition or all vertices to CSV, the chart to SVG or 300 dpi PNG, and the complete input session to JSON. Open session restores a saved JSON session. Files are processed in the browser; no data storage or analysis service is involved. Save before closing the page.
 
-The SrTiO3 and Ba3V2O8 example energies are invented solely to exercise the geometry; the explicitly labeled ZnSb2O4 presets use the published HSE values described below. The initial phase lists are not established exhaustive phase sets for these materials. The app does not supply validated thermodynamic data.
+The binary, SrTiO3 and Ba3V2O8 example energies are invented solely to exercise the geometry; the explicitly labeled ZnSb2O4 presets use the published HSE values described below. The initial phase lists are not established exhaustive phase sets for these materials. The app does not supply validated thermodynamic data.
+
+## Binary materials
+
+Choose **ZnO**, **ZnF₂**, or **In₂O₃** in the example menu, or use **New system** with any two-element formula. All three new presets contain illustrative formation energies and no assumed competing phases; replace the values and add relevant competitors for research use. All elemental references are per atom; for F use ½ E(F₂), just as O uses ½ E(O₂).
+
+For AₐBᵦ, the host equality is `a Δμ_A + b Δμ_B = H`. Choosing `x = Δμ_A` gives `Δμ_B = (H − a x) / b`. A competitor AₚB_q imposes `(p − q a/b) x ≤ H_comp − q H/b`. The elemental inequalities and every enabled competitor intersect to produce an allowed interval. With only elemental limits and negative H, `H/a ≤ Δμ_A ≤ 0` and `H/b ≤ Δμ_B ≤ 0`.
+
+- **1D interval** shows the range of the selected independent potential.
+- **2D** shows the host line in the two chemical potentials, with competing-phase boundary lines and active endpoint labels.
+- Choose X or Y to swap the independent element; the selected physical condition is preserved.
+- Enter X and press **Select point**; Y is calculated automatically. Use **Midpoint**, click the host line, or choose V1/V2 in the endpoint table.
+- A finite binary interval is stable; a collapsed point is marginal. Positive host formation energies or incompatible competing phases can leave no allowed interval.
+- Total energies, formula/atom/cell bases, absolute potentials, saved sessions, label controls and SVG/300 dpi PNG exports use the same workflow as ternaries. A binary host has no third chemical-potential axis; its 3D controls are hidden.
 
 ## Equations and implementation
 
@@ -79,7 +92,7 @@ Background: [Materials Project chemical-potential diagrams](https://docs.materia
 
 The independent calculation engine is `dist/engine.mjs`; the interface is `dist/app.mjs`, `dist/index.html`, and `dist/style.css`. No build step or dependency installation is required. Serve `dist` over HTTP, for example `python3 -m http.server 8765 --directory dist`, and open localhost:8765. ES modules require an HTTP server rather than opening index.html directly.
 
-Run `node --test engine.test.mjs plot3d.test.mjs faces3d.test.mjs display.test.mjs occlusion.test.mjs` for the scientific regression suite. It checks analytic SrTiO3 vertices, Ba3V2O8 stoichiometry, invariance under axis elimination, total-energy and per-atom normalization, original 3D inequalities and host conservation, instability, polymorphs, duplicates, degenerate intersections, validation, and 50 seeded feasible ternary systems.
+Run `node --test binary.test.mjs engine.test.mjs plot3d.test.mjs faces3d.test.mjs display.test.mjs occlusion.test.mjs` for the scientific regression suite. It checks analytic SrTiO3 vertices, Ba3V2O8 stoichiometry, invariance under axis elimination, total-energy and per-atom normalization, original 3D inequalities and host conservation, instability, polymorphs, duplicates, degenerate intersections, validation, and 50 seeded feasible ternary systems.
 
 CSV exports include the energy provenance flag, target formula, all Δμ values, supplied references, absolute μ when references are available, and active boundaries. Session exports additionally preserve the full phase dataset and normalization settings. Save both the session and condition CSV for reproducibility.
 
@@ -117,9 +130,9 @@ In each case, the rich bound follows from ZnO+Sb2O5: O <= (-13.63-H)/2, and the 
 
 The **Reference illustrations** button in the paper preset note opens the fixed figure viewer. It is separate from **3D → Host + competing-phase faces**, which calculates live surfaces from the current input system.
 
-## General ternary workflow and plot appearance
+## General binary and ternary workflow and plot appearance
 
-**New ternary system** starts from an entered formula and formation energy, with no competing phases inherited from an example. Exactly three distinct elements are required; oxide, chalcogenide, nitride, and other ternaries use the same engine. Add competitors and select their energy bases in the existing workspace. DFT total energies remain supported by switching input mode and entering elemental references. Editing a preset identifies the workspace as Custom system. Formulas may contain parentheses, fractional counts, or pasted Unicode subscript digits, which are normalized before parsing.
+**New system** starts from an entered formula and formation energy, with no competing phases inherited from an example. Two or three distinct elements are required; oxide, chalcogenide, nitride, and other ternaries use the same engine. Add competitors and select their energy bases in the existing workspace. DFT total energies remain supported by switching input mode and entering elemental references. Editing a preset identifies the workspace as Custom system. Formulas may contain parentheses, fractional counts, or pasted Unicode subscript digits, which are normalized before parsing.
 
 **Tick interval** uses one zero-anchored interval on every axis in either plot. Auto selects regular steps; explicit choices include 0.50 eV. Very dense manual intervals are increased uniformly, with the effective interval stated next to the controls. Tick formatting avoids negative zero. **Equal eV scale in 2D** is enabled initially, matching the always-equal physical scales in 3D; switching it off permits the 2D view to fill its rectangular plotting area. This controls geometric scaling separately from tick spacing. Rounded 3D axis extents do not alter the display bounds used to clip physical faces or the host stability calculation.
 

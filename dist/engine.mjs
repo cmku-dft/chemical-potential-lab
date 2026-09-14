@@ -1,4 +1,4 @@
-// Independent ternary half-plane solver. Energies are eV per entered formula.
+// Independent binary interval and ternary half-plane solvers. Energies are eV per entered formula.
 import {normalizeFormula} from './display.mjs';
 export const ELEMENTS = new Set('H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' '));
 export function number(value, label) {
@@ -29,7 +29,8 @@ export function energyPerFormula(row,mode,refs,composition) {
 export function solve(model) {
   if(!['formation','total'].includes(model.mode))throw Error('Choose formation enthalpies or total energies.');
   const composition=parseFormula(model.target.formula), elements=Object.keys(composition);
-  if(elements.length!==3)throw Error('The target must contain exactly three distinct elements.');
+  if(elements.length===2)return solveBinary(model,composition,elements);
+  if(elements.length!==3)throw Error('The target must contain two or three distinct elements.');
   const eliminated=model.eliminated||elements[2];if(!elements.includes(eliminated))throw Error('Eliminated element must belong to the target.');
   const axes=model.axes??[...elements.filter(e=>e!==eliminated),eliminated];
   if(!Array.isArray(axes)||axes.length!==3||new Set(axes).size!==3||axes.some(e=>!elements.includes(e)))throw Error('Assign each target element to exactly one of X, Y, and Z.');
@@ -57,7 +58,7 @@ export function solve(model) {
   const area=vertices.length>2?Math.abs(vertices.reduce((sum,p,i)=>{const q=vertices[(i+1)%vertices.length];return sum+p[0]*q[1]-p[1]*q[0];},0))/2:0;
   const chemicalPotentials=p=>({...Object.fromEntries([[x,p[0]],[y,p[1]],[z,(h-a*p[0]-b*p[1])/c]])});
   const active=p=>constraints.filter((q,i)=>Math.abs(normalized[i].A*p[0]+normalized[i].B*p[1]-normalized[i].C)<=tolerance*5);
-  return {elements,x,y,z,composition,h,constraints,vertices,area,tolerance,feasible,chemicalPotentials,active,dimension:vertices.length===0?-1:vertices.length===1?0:area<=tolerance*tolerance?1:2};
+  return {system:'ternary',dependent:z,expectedDimension:2,elements,x,y,z,composition,h,constraints,vertices,area,tolerance,feasible,chemicalPotentials,active,dimension:vertices.length===0?-1:vertices.length===1?0:area<=tolerance*tolerance?1:2};
 }
 export const examples={
   SrTiO3:{mode:'formation',eliminated:'O',refs:{Sr:'',Ti:'',O:''},target:{formula:'SrTiO3',energy:-16,basis:'formula',units:1},phases:[['SrO',-6],['TiO2',-9],['Ti2O3',-14],['Sr2TiO4',-22],['SrO2',-7]].map(([formula,energy])=>({formula,energy,basis:'formula',units:1,enabled:true}))},
@@ -72,3 +73,48 @@ for(const [key,energy,location] of [['ZnSb2O4_HSE_table1',-10.25,'Table 1'],['Zn
     target:{formula:'ZnSb2O4',energy,basis:'formula',units:1},
     phases:[['ZnO',-3.35],['Sb2O3',-6.82],['Sb2O5',-10.28]].map(([formula,energy])=>({formula,energy,basis:'formula',units:1,enabled:true}))};
 }
+
+// Binary points are stored in the physical (mu_x, mu_y) plane. Elimination
+// is used only to solve the allowed interval, never to introduce a third element.
+function solveBinary(model,composition,elements){
+  const dependent=model.eliminated||elements[1];
+  if(!elements.includes(dependent))throw Error('Eliminated element must belong to the target.');
+  const axes=model.axes??[...elements.filter(e=>e!==dependent),dependent];
+  if(!Array.isArray(axes)||axes.length!==2||new Set(axes).size!==2||axes.some(e=>!elements.includes(e)))throw Error('Assign the two target elements to X and Y.');
+  const [x,y]=axes,a=composition[x],b=composition[y];
+  const h=energyPerFormula(model.target,model.mode,model.refs||{},composition);
+  if(!Array.isArray(model.phases)||model.phases.length>150)throw Error('Enter at most 150 competing phases.');
+  const tolerance=1e-8*Math.max(1,Math.abs(h/a),Math.abs(h/b)),constraints=[];
+  function add(label,counts,enthalpy,kind,index){
+    const A=counts[x]||0,B=counts[y]||0,C=enthalpy;
+    const reducedA=A-B*a/b,reducedC=C-B*h/b;
+    constraints.push({label,counts,enthalpy,A,B,C,reducedA,reducedC,kind,index});
+  }
+  for(const e of elements)add(`${e} elemental limit`,{[e]:1},0,'element',-1);
+  model.phases.forEach((p,index)=>{if(p.enabled===false)return;const counts=parseFormula(p.formula);
+    if(Object.keys(counts).some(e=>!elements.includes(e)))throw Error(`${p.formula} contains an element outside ${elements.join('–')}.`);
+    add(p.formula,counts,energyPerFormula(p,model.mode,model.refs||{},counts),'phase',index);
+  });
+  let lo=-Infinity,hi=Infinity,impossible=false;
+  for(const q of constraints){
+    // Detect proportional compositions relative to coefficient magnitude.
+    if(Math.abs(q.reducedA)<=1e-12*Math.max(q.A,q.B*a/b,1e-12)){
+      if(q.reducedC < -tolerance*Math.max(1,Math.hypot(q.A,q.B)))impossible=true;
+    }else if(q.reducedA>0)hi=Math.min(hi,q.reducedC/q.reducedA);
+    else lo=Math.max(lo,q.reducedC/q.reducedA);
+  }
+  const pointAt=value=>[value,(h-a*value)/b];
+  const feasible=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&Math.abs(a*p[0]+b*p[1]-h)/Math.hypot(a,b)<=tolerance&&constraints.every(q=>(q.A*p[0]+q.B*p[1]-q.C)/Math.hypot(q.A,q.B)<=tolerance);
+  let vertices=[];
+  if(!impossible&&Number.isFinite(lo)&&Number.isFinite(hi)&&lo<=hi+tolerance/Math.hypot(1,a/b)){
+    vertices=(hi-lo)*Math.hypot(1,a/b)<=tolerance?[pointAt((lo+hi)/2)]:[pointAt(lo),pointAt(hi)];
+    if(!vertices.every(feasible))vertices=[];
+  }
+  const chemicalPotentials=p=>({[x]:p[0],[y]:(h-a*p[0])/b});
+  const active=p=>constraints.filter(q=>Math.abs(q.A*p[0]+q.B*p[1]-q.C)/Math.hypot(q.A,q.B)<=tolerance*5);
+  return {system:'binary',dependent:y,expectedDimension:1,elements,x,y,z:null,composition,h,constraints,vertices,area:0,tolerance,feasible,chemicalPotentials,active,pointAt,interval:vertices.length?[vertices[0][0],vertices.at(-1)[0]]:null,dimension:vertices.length===0?-1:vertices.length===1?0:1};
+}
+// These energies are demonstrations, not a validated DFT or experimental dataset.
+export const binaryExamples=Object.fromEntries([['ZnO',-3.5],['ZnF2',-7],['In2O3',-9]].map(([formula,energy])=>{
+  const elements=Object.keys(parseFormula(formula));return [formula,{mode:'formation',eliminated:elements[1],refs:Object.fromEntries(elements.map(e=>[e,''])),target:{formula,energy,basis:'formula',units:1},phases:[]}];
+}));

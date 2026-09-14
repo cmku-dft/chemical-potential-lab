@@ -14,6 +14,7 @@
 - `npm run dev` serves the app locally; `npm run check` and `npm test` validate it.
 - `npm run build:pages` produces ignored `.pages-output/`; never edit that directory directly.
 - Keep asset links relative so the app works under `/chemical-potential-lab/`.
+- Binary hosts use one independent potential, shown as an interval or a 2D host line. Never invent a third constituent or classify every binary line as marginal.
 - Preserve scientific constraints, energy units, formula parsing, session compatibility, and SVG/PNG export behavior.
 - Preserve the distinction between illustrative energies and published HSE data, including the two conflicting ZnSb2O4 host energies.
 - Do not add Chesta code/assets or private DFT datasets, local sessions, credentials, or unpublished research files.
