@@ -3,7 +3,7 @@ import {maskLineArtwork} from './occlusion.mjs';
 import {potentialSVG,ticks,tickStep,tickLabel,roundRange,formulaSVG} from './display.mjs';
 import {buildPhaseFaces} from './faces3d.mjs';
 import {renderPhaseSpace} from './render-faces.mjs';
-export const defaultCamera={azimuth:-135,elevation:25,zoom:1,showHost:false,showFaces:true,bounds:null,opacity:.75,tickInterval:0,equalScale:true,showPhaseLabels:true,showVertexLabels:true,showAxisLabels:true};
+export const defaultCamera={azimuth:-135,elevation:25,zoom:1,showHost:false,showFaces:true,bounds:null,opacity:.75,tickInterval:0,equalScale:true,showPhaseLabels:true,showVertexLabels:true,showAxisLabels:true,showSelectedPoint:true};
 const faceCache=new WeakMap();
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const text=(n,d=2)=>Math.abs(n)<.5*10**-d?(0).toFixed(d):n.toFixed(d);
@@ -28,6 +28,7 @@ export function makeProjection(r,camera=defaultCamera,space=null){
   return {axes,ranges,interval,host,project,unproject,edgeOn,scale,depth,direction:Object.fromEntries(axes.map((e,i)=>[e,forward[i]]))};
 }
 export function render3D(r,{camera=defaultCamera,selected=null,own=false,formula='',color=()=> '#087f78'}={}){
+  if(camera.showSelectedPoint===false)selected=null;
   if(camera.showFaces){
     const key=JSON.stringify([camera.bounds,formula]);let cached=faceCache.get(r);
     if(!cached||cached.key!==key){cached={key,space:buildPhaseFaces(r,{...(camera.bounds?{bounds:camera.bounds}:{}),formula})};faceCache.set(r,cached);}
