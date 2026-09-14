@@ -88,3 +88,9 @@ The **Reference illustrations** button in the paper preset note opens the fixed 
 **Face opacity** changes the polygon fill from 0% to 100% in 2D and both 3D modes. Boundaries stay visible. Transparent faces still pick the nearest physical surface; the host-only view or vertex table remains available to select hidden host conditions. Sessions save opacity, tick interval, and equal-scale preferences, and SVG exports preserve fills and subscript labels. Chemical labels in plots use SVG subscript tspans; headings, phase previews, legends and boundary tables use HTML subscripts. Numeric input fields remain editable plain text.
 
 At 100% opacity, all physical fills, including the optional full host plane, are fully opaque. Axis/tick artwork and selected-point guides are masked by any faces in front of them; the display frame is drawn behind the surfaces. SVG exports include these depth masks. Partial opacity attenuates hidden guides, while 0% leaves only the outlines and guides.
+
+### Figure editing and raster export
+
+The **Show labels** controls independently hide phase formulas, vertex names, and axis chemical potentials in 2D and both 3D views, while preserving tick values, geometry, and point selection. Saved sessions preserve these choices. Both export formats follow the visible label settings and omit explanatory captions below the diagram.
+
+**PNG · 300 dpi** exports a white-background image 2400 pixels wide (8 inches at 300 dpi), preserving the plot aspect ratio. PNG pHYs metadata records 11811 pixels/metre, equivalent to 300 dpi within the format’s rounding. SVG remains a vector export. Browser verification covered PNG decoding, pixel dimensions and resolution metadata, valid SVG XML, removal of hidden labels and captions, and retention of the live plot in all three views.

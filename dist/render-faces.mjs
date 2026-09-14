@@ -18,7 +18,8 @@ export function renderPhaseSpace(r,space,p,{selected,own,formula,opacity=.75}){
       if(!occupied.some(b=>box[0]<b[0]+b[2]&&box[0]+box[2]>b[0]&&box[1]<b[1]+b[3]&&box[1]+box[3]>b[1])){x=nx;y=ny;break;}
     }
     occupied.push([x-(anchor==='middle'?width/2:anchor==='end'?width:0)-3,y-size-3,width+6,size+6]);
-    return `${avoid&&(x!==pos[0]||y!==pos[1])?`<line x1="${pos[0]}" y1="${pos[1]}" x2="${x}" y2="${y-5}" stroke="${fill}" opacity=".45"/>`:''}<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="system-ui" font-size="${size}" fill="${fill}" stroke="white" stroke-width="3" paint-order="stroke" pointer-events="none">${chemical?formulaSVG(value):potentialSVG(value)}</text>`;
+    const kind=chemical?'phase':/^V\d+$/.test(value)?'vertex':value.includes('μ')?'axis':null;
+    return `<g ${kind?`data-plot-label="${kind}"`:""}>${avoid&&(x!==pos[0]||y!==pos[1])?`<line x1="${pos[0]}" y1="${pos[1]}" x2="${x}" y2="${y-5}" stroke="${fill}" opacity=".45"/>`:''}<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="system-ui" font-size="${size}" fill="${fill}" stroke="white" stroke-width="3" paint-order="stroke" pointer-events="none">${chemical?formulaSVG(value):potentialSVG(value)}</text></g>`;
   };
   let svg=`<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 510" role="img" aria-label="Interactive 3D phase faces for ${esc(formula)}"><title>${esc(formula)} — calculated 3D phase faces</title><desc>X: ${r.x}, Y: ${r.y}, Z: ${r.z}. All axes in eV/atom with equal physical scales. Pink is the host equilibrium face. Other colored faces are stable parts of competing-phase equilibrium planes, clipped to display bounds. ${own?'User-supplied':'Illustrative'} energies.</desc><rect width="860" height="510" fill="white"/>`;
   let frame='';
@@ -65,8 +66,8 @@ export function renderPhaseSpace(r,space,p,{selected,own,formula,opacity=.75}){
   for(const [x,y,i]of shownVertices)svg+=text([x+11,y-10],`V${i+1}`,'#69245e',12,'middle',true);
   // Label host last in the face order but first for collision placement.
   for(const face of [...space.faces].sort((a,b)=>(b.kind==='host')-(a.kind==='host'))){const mu=center(face);if(!visible(mu,face))continue;svg+=text(project(mu),labelOf(face),face.kind==='host'?'#7e155c':'#1d4268',face.kind==='host'?15:14,'middle',true,true);}
-  svg+=text([430,475],'Pink: host stability · Other colors: competing-phase faces','#425f70',13);
-  svg+=text([430,496],'Display bounds trim the faces; they do not set the host stability limits.','#657b86',12);
+  svg+='<g data-export-omit="true">';svg+=text([430,475],'Pink: host stability · Other colors: competing-phase faces','#425f70',13);
+  svg+=text([430,496],'Display bounds trim the faces; they do not set the host stability limits.','#657b86',12);svg+='</g>';
   svg+=text([842,45],own?'USER-SUPPLIED ENERGIES':'ILLUSTRATIVE ENERGIES','#71858e',11,'end');
   if(!space.faces.length)svg+=text([430,245],'No phase faces inside these display bounds.','#a45a27',19);
   return svg+'</svg>';

@@ -3,7 +3,7 @@ import {maskLineArtwork} from './occlusion.mjs';
 import {potentialSVG,ticks,tickStep,tickLabel,roundRange,formulaSVG} from './display.mjs';
 import {buildPhaseFaces} from './faces3d.mjs';
 import {renderPhaseSpace} from './render-faces.mjs';
-export const defaultCamera={azimuth:-135,elevation:25,zoom:1,showHost:false,showFaces:true,bounds:null,opacity:.75,tickInterval:0,equalScale:true};
+export const defaultCamera={azimuth:-135,elevation:25,zoom:1,showHost:false,showFaces:true,bounds:null,opacity:.75,tickInterval:0,equalScale:true,showPhaseLabels:true,showVertexLabels:true,showAxisLabels:true};
 const faceCache=new WeakMap();
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const text=(n,d=2)=>Math.abs(n)<.5*10**-d?(0).toFixed(d):n.toFixed(d);
@@ -42,7 +42,8 @@ export function render3D(r,{camera=defaultCamera,selected=null,own=false,formula
     let at=p;
     if(avoid){const candidates=[[0,0],[0,-20],[0,20],[22,-20],[-22,-20],[22,20],[-22,20],[0,-40],[0,40],[40,-40],[-40,-40]];for(const [dx,dy]of candidates){const q=[p[0]+dx,p[1]+dy],b=box(q);if(!occupied.some(a=>b[0]<a[0]+a[2]&&b[0]+b[2]>a[0]&&b[1]<a[1]+a[3]&&b[1]+b[3]>a[1])){at=q;break;}}}
     occupied.push(box(at));const leader=at===p?'':`<line x1="${p[0]}" y1="${p[1]}" x2="${at[0]}" y2="${at[1]-size/2}" stroke="${fill}" opacity=".4"/>`;
-    return `${leader}<text x="${at[0]}" y="${at[1]}" text-anchor="${anchor}" font-family="system-ui" font-size="${size}" fill="${fill}" stroke="white" stroke-width="4" paint-order="stroke">${chemical?formulaSVG(t):potentialSVG(t)}</text>`;
+    const kind=chemical?'phase':/^V\d+$/.test(t)?'vertex':t.includes('μ')?'axis':null;
+    return `<g ${kind?`data-plot-label="${kind}"`:""}>${leader}<text x="${at[0]}" y="${at[1]}" text-anchor="${anchor}" font-family="system-ui" font-size="${size}" fill="${fill}" stroke="white" stroke-width="4" paint-order="stroke">${chemical?formulaSVG(t):potentialSVG(t)}</text></g>`;
   };
   const line=(a,b,stroke='#d1dfe6',width=1,dash='')=>`<line x1="${project(a)[0]}" y1="${project(a)[1]}" x2="${project(b)[0]}" y2="${project(b)[1]}" stroke="${stroke}" stroke-width="${width}" ${dash?`stroke-dasharray="${dash}"`:''}/>`;
   let svg=`<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 510" role="img" aria-label="Rotatable 3D chemical-potential stability diagram for ${esc(formula)}"><title>${esc(formula)} — 3D chemical-potential stability</title><desc>X: ${r.x}, Y: ${r.y}, Z: ${r.z}. All axes in eV/atom with equal physical scales. ${own?'User-supplied':'Illustrative'} energies. The allowed set lies on the host equality plane.</desc><rect width="860" height="510" fill="white"/>`;
@@ -82,9 +83,9 @@ export function render3D(r,{camera=defaultCamera,selected=null,own=false,formula
   for(const [p,t,c] of annotations)svg+=label(p,t,c,13,'middle',true,true);
   vertices.forEach((p,i)=>{const [x,y]=project(p);svg+=`<g data-vertex="${i}" style="cursor:pointer"><circle cx="${x}" cy="${y}" r="12" fill="transparent"/><circle cx="${x}" cy="${y}" r="4.5" fill="white" stroke="#087f78" stroke-width="2"/>${label([x+9,y-10],`V${i+1}`,'#183441',12,'start',true)}</g>`;});
   if(selected){const s=mu(selected),p=project(s);for(const [i,e]of axes.entries()){const end={...s,[e]:corner[e]};svg+=maskLineArtwork(`guide-${i}`,line(s,end,'#bb7b4d',1,'3 4'),s,end,surfaces,projection,camera.opacity??.75);}svg+=`<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="#c25b26" stroke="white" stroke-width="2" pointer-events="none"/>`;}
-  svg+=label([430,491],`${camera.showHost?'Pale plane: host equality + elemental limits   ·   ':''}Teal: allowed region`,'#5f7480',13);
+  svg+='<g data-export-omit="true">';svg+=label([430,491],`${camera.showHost?'Pale plane: host equality + elemental limits   ·   ':''}Teal: allowed region`,'#5f7480',13);svg+='</g>';
   if(!vertices.length)svg+=label([430,245],'No feasible stability region','#a45a27',21);
-  if(projection.edgeOn)svg+=label([430,465],'Edge-on view — rotate to select an interior point','#a45a27',13);
+  if(projection.edgeOn)svg+='<g data-export-omit="true">'+label([430,465],'Edge-on view — rotate to select an interior point','#a45a27',13)+'</g>';
   svg+=label([842,45],own?'USER-SUPPLIED ENERGIES':'ILLUSTRATIVE ENERGIES','#7a8e98',11,'end');
   return {svg:svg+'</svg>',projection};
 }
