@@ -1,0 +1,13 @@
+{
+  "name": "chemical-potential-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node --test engine.test.mjs plot3d.test.mjs faces3d.test.mjs display.test.mjs occlusion.test.mjs",
+    "build:pages": "node scripts/build-pages.mjs"
+  }
+}

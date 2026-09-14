@@ -2,6 +2,44 @@
 
 Independent browser prototype for ternary bulk chemical-potential stability diagrams and DFT defect formation-energy workflows. Start with SrTiO3 or Ba3V2O8, then replace all illustrative data with a consistent phase dataset.
 
+## Open the app
+
+- **Live app:** https://cmku-dft.github.io/chemical-potential-lab/
+- **Source and updates:** https://github.com/cmku-dft/chemical-potential-lab
+- **Original deployment:** https://chemical-potential-lab-pakpoom.p-reunchan.chatgpt.site/
+
+## Make changes and publish
+
+The source is in `dist/`; no compilation or dependency installation is required. Every push to `main` runs the scientific checks and automatically publishes the GitHub Pages app. A failed check leaves the previous successful app live. See the repository’s **Actions** tab for progress.
+
+**With Codex:** open this repository as a project and ask for the change. `AGENTS.md` explains the code and publication workflow for future sessions.
+
+**With GitHub Desktop:** clone this repository, fetch/pull before editing, edit the files, commit, and click **Push origin**. The website updates automatically after the checks pass.
+
+**In the GitHub website:** open a file under `dist/`, click the pencil to edit, and commit to `main` (or create a pull request for review). No file upload to a separate hosting service is needed.
+
+**Locally**, install Node.js 22 or newer, then run:
+
+```sh
+git clone https://github.com/cmku-dft/chemical-potential-lab.git
+cd chemical-potential-lab
+npm run dev
+```
+
+Open http://127.0.0.1:8765. After editing:
+
+```sh
+npm run check
+npm test
+git add <files-you-changed>
+git commit -m "Describe the change"
+git push origin main
+```
+
+You can also run **Actions → Check and publish app → Run workflow** to republish. To undo a change, use a revert commit and push it; the same checks and deployment run again. GitHub Pages and the original ChatGPT Sites deployment are independent: GitHub updates publish the Pages URL, while the original URL stays at its last Sites deployment.
+
+The workflow follows [GitHub’s Pages publishing documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+
 ## Use
 
 1. Enter the target formula and energy. Formulas encode explicit stoichiometries; parentheses and fractional counts are supported (e.g. Ba3(VO4)2).
@@ -9,7 +47,7 @@ Independent browser prototype for ternary bulk chemical-potential stability diag
 3. Total energies require elemental reference energies in eV/atom. For O, supply half the consistently calculated O2 energy, including any chosen reference correction. Formation-energy mode can optionally use references to report absolute chemical potentials.
 4. Add every relevant competing phase, including binary and ternary compounds and polymorphs. Unchecked phases are excluded; elemental precipitation constraints remain included.
 5. Assign each element to the X, Y, and Z axes. All six orderings are supported; assigning an occupied element swaps the two axes. In 2D, Z is eliminated using the host equality. Axis changes preserve the selected physical condition when the inputs are current. Calculate after editing phase data. Click the shaded region or a vertex, or enter the two independent chemical potentials numerically. The vertex table also supports keyboard operation.
-6. Export a selected condition or all vertices to CSV, the chart to SVG, and the complete input session to JSON. Open session restores a saved JSON session. Files are processed in the browser; no data storage or analysis service is involved. Save before closing the page.
+6. Export a selected condition or all vertices to CSV, the chart to SVG or 300 dpi PNG, and the complete input session to JSON. Open session restores a saved JSON session. Files are processed in the browser; no data storage or analysis service is involved. Save before closing the page.
 
 The SrTiO3 and Ba3V2O8 example energies are invented solely to exercise the geometry; the explicitly labeled ZnSb2O4 presets use the published HSE values described below. The initial phase lists are not established exhaustive phase sets for these materials. The app does not supply validated thermodynamic data.
 
