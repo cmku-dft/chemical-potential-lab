@@ -19,6 +19,8 @@ export function parseFormula(formula) {
   if(Object.values(result).some(x=>!Number.isFinite(x)||x>1e6))throw Error('Stoichiometry is too large.');return result;
 }
 export function energyPerFormula(row,mode,refs,composition) {
+  mode=row.energyType || mode;
+  if(!['formation','total'].includes(mode))throw Error('Unknown energy type.');
   let energy=number(row.energy,`${row.formula} energy`);
   if(row.basis==='atom')energy*=Object.values(composition).reduce((a,b)=>a+b,0);
   else if(row.basis==='cell'){const units=number(row.units,`${row.formula} formula units per cell`);if(units<=0)throw Error('Formula units per cell must be positive.');energy/=units;}
