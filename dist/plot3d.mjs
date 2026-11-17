@@ -13,7 +13,10 @@ export function makeProjection(r,camera=defaultCamera,space=null){
   const host=r.h<=0?axes.map(e=>Object.fromEntries(axes.map(f=>[f,f===e?r.h/r.composition[f]:0]))):[];
   const extentPoints=camera.showHost&&host.length?host:muPoints;
   let ranges=axes.map(e=>{if(space)return space.bounds[e];const values=extentPoints.map(p=>p[e]);if(!values.length)return [-1,0];const lo=Math.min(...values),hi=Math.max(...values);return hi-lo<1e-10?[lo-.25,hi+.25]:[lo,hi];});
-  const interval=tickStep(ranges,camera.tickInterval);ranges=ranges.map(a=>roundRange(a,interval));
+  const interval=tickStep(ranges,camera.tickInterval);
+  // Phase faces and the frame must use the same exact display bounds.
+  // Only the automatically fitted host-only view may round its limits.
+  if(!space)ranges=ranges.map(a=>roundRange(a,interval));
   const spans=ranges.map(([lo,hi])=>hi-lo),span=Math.max(.5,...spans),center=ranges.map(([lo,hi])=>(lo+hi)/2);
   const az=camera.azimuth*Math.PI/180,el=camera.elevation*Math.PI/180;
   // Horizontal screen vector and vertical screen vector form an orthonormal camera basis.

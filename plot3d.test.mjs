@@ -3,6 +3,16 @@ import assert from 'node:assert/strict';
 import {solve,examples} from './dist/engine.mjs';
 import {makeProjection,render3D,defaultCamera} from './dist/plot3d.mjs';
 import {frontEdges} from './dist/front-axes.mjs';
+import {ticks} from './dist/display.mjs';
+test('phase-view axis limits match exact display bounds independently of tick spacing',()=>{
+ const r=solve(examples.SrTiO3),bounds={Sr:[-11.05,0],Ti:[-13.05,0],O:[-9.05,0]};
+ for(const frontAxes of [false,true])for(const tickInterval of [0,1,2,5]){
+  const out=render3D(r,{camera:{...defaultCamera,bounds,frontAxes,tickInterval}});
+  assert.deepEqual(out.projection.ranges,out.projection.axes.map(e=>bounds[e]));
+  assert.equal(out.projection.ranges[2][0],-9.05);
+  assert.ok(ticks(out.projection.ranges[2],out.projection.interval).every(t=>t>=-9.05&&t<=0));
+ }
+});
 test('front-edge publication axes use silhouette edges and preserve projection',()=>{
  const r=solve(examples.SrTiO3);
  for(const azimuth of [-135,-45,45,135])for(const elevation of [-30,25])for(const showFaces of [true,false]){
