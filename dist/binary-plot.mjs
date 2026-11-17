@@ -7,10 +7,10 @@ export function renderBinary(r,{view='1d',camera={},selected=null,own=false,form
   else{const ys=r.vertices.map(p=>p[1]);const layout=layout2D([raw,ys.length?[Math.min(...ys),Math.max(...ys)]:[Math.min(-1,r.h/r.composition[r.y]),0]],W-L-R,H-T-B,camera);[xr,yr]=layout.ranges;step=layout.step;}
   const sx=x=>L+(x-xr[0])/(xr[1]-xr[0])*(W-L-R),sy=y=>interval?150:H-B-(y-yr[0])/(yr[1]-yr[0])*(H-T-B);
   const project=p=>[sx(p[0]),sy(p[1])];
-  const text=(x,y,s,kind='',anchor='middle')=>`<text ${kind?`data-plot-label="${kind}"`:''} x="${x}" y="${y}" text-anchor="${anchor}" font-family="system-ui" font-size="15" fill="#264655" stroke="white" stroke-width="3" paint-order="stroke">${s}</text>`;
+  const text=(x,y,s,kind='',anchor='middle',size=15)=>`<text ${kind?`data-plot-label="${kind}"`:''} x="${x}" y="${y}" text-anchor="${anchor}" font-family="system-ui" font-size="${size}" fill="#264655" stroke="white" stroke-width="3" paint-order="stroke">${s}</text>`;
   let svg=`<svg id="diagram" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeText(formula)} binary chemical-potential ${interval?'interval':'stability line'}"><title>${escapeText(formula)} binary stability</title><desc>The host has one independent chemical potential. The highlighted interval or line contains the allowed host conditions.</desc><rect width="${W}" height="${H}" fill="white"/>`;
-  for(const value of ticks(xr,step)){const x=sx(value);svg+=`<path d="M${x} ${interval?142:T}V${interval?158:H-B}" fill="none" stroke="#d6e1e6"/>`+text(x,interval?190:H-B+25,tickLabel(value,step));}
-  if(!interval)for(const value of ticks(yr,step)){const y=sy(value);svg+=`<path d="M${L} ${y}H${W-R}" fill="none" stroke="#e7eef2"/>`+text(L-12,y+5,tickLabel(value,step),'','end');}
+  for(const value of ticks(xr,step)){const x=sx(value);svg+=`<path d="M${x} ${interval?142:T}V${interval?158:H-B}" fill="none" stroke="#d6e1e6"/>`+text(x,interval?190:H-B+25,tickLabel(value,step,camera.tickDecimals),'','middle',camera.tickFontSize??12);}
+  if(!interval)for(const value of ticks(yr,step)){const y=sy(value);svg+=`<path d="M${L} ${y}H${W-R}" fill="none" stroke="#e7eef2"/>`+text(L-12,y+5,tickLabel(value,step,camera.tickDecimals),'','end',camera.tickFontSize??12);}
   svg+=`<path d="${interval?`M${L} 150H${W-R}`:`M${L} ${T}V${H-B}H${W-R}`}" fill="none" stroke="#9bb0bb"/>`;
   if(!interval){
     svg+=`<defs><clipPath id="binary-clip"><rect x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}"/></clipPath></defs><g clip-path="url(#binary-clip)">`;

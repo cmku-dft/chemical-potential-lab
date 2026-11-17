@@ -4,7 +4,7 @@ import {maskLineArtwork} from './occlusion.mjs';
 import {potentialSVG,ticks,tickStep,tickLabel,roundRange,formulaSVG} from './display.mjs';
 import {buildPhaseFaces} from './faces3d.mjs';
 import {renderPhaseSpace} from './render-faces.mjs';
-export const defaultCamera={azimuth:-135,elevation:25,zoom:1,frontAxes:false,showHost:false,showFaces:true,bounds:null,opacity:.75,tickInterval:0,equalScale:true,showPhaseLabels:true,showVertexLabels:true,showAxisLabels:true,showSelectedPoint:true};
+export const defaultCamera={azimuth:-135,elevation:25,zoom:1,tickFontSize:12,tickDecimals:-1,frontAxes:false,showHost:false,showFaces:true,bounds:null,opacity:.75,tickInterval:0,equalScale:true,showPhaseLabels:true,showVertexLabels:true,showAxisLabels:true,showSelectedPoint:true};
 const faceCache=new WeakMap();
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const text=(n,d=2)=>Math.abs(n)<.5*10**-d?(0).toFixed(d):n.toFixed(d);
@@ -37,7 +37,7 @@ export function render3D(r,{camera=defaultCamera,selected=null,own=false,formula
     const key=JSON.stringify([camera.bounds,formula]);let cached=faceCache.get(r);
     if(!cached||cached.key!==key){cached={key,space:buildPhaseFaces(r,{...(camera.bounds?{bounds:camera.bounds}:{}),formula})};faceCache.set(r,cached);}
     const space=cached.space,projection=makeProjection(r,camera,space);
-    return {svg:renderPhaseSpace(r,space,projection,{selected,own,formula,opacity:camera.opacity??.75,frontAxes:camera.frontAxes}),projection,space};
+    return {svg:renderPhaseSpace(r,space,projection,{selected,own,formula,opacity:camera.opacity??.75,frontAxes:camera.frontAxes,tickFontSize:camera.tickFontSize,tickDecimals:camera.tickDecimals}),projection,space};
   }
   const projection=makeProjection(r,camera),{axes,ranges,host,project}=projection;
   const point=p=>project(p).join(','),mu=p=>r.chemicalPotentials(p);
@@ -82,7 +82,7 @@ export function render3D(r,{camera=defaultCamera,selected=null,own=false,formula
   }
   const axisColors=['#386bb8','#aa6422','#8853a1'];
   if(!camera.frontAxes)axes.forEach((e,i)=>{const end={...corner,[e]:ranges[i][1]};let artwork=line(corner,end,axisColors[i],2);
-    for(const value of ticks(ranges[i],projection.interval)){const p=project({...corner,[e]:value});artwork+=`<circle cx="${p[0]}" cy="${p[1]}" r="2" fill="${axisColors[i]}"/>`;artwork+=label([p[0]+(i===2?-12:0),p[1]+(i===2?4:18)],tickLabel(value,projection.interval),axisColors[i],12,i===2?'end':'middle');}
+    for(const value of ticks(ranges[i],projection.interval)){const p=project({...corner,[e]:value});artwork+=`<circle cx="${p[0]}" cy="${p[1]}" r="2" fill="${axisColors[i]}"/>`;artwork+=label([p[0]+(i===2?-12:0),p[1]+(i===2?4:18)],tickLabel(value,projection.interval,camera.tickDecimals),axisColors[i],camera.tickFontSize??12,i===2?'end':'middle');}
     const p=project(end),o=project(corner),n=Math.hypot(p[0]-o[0],p[1]-o[1])||1;artwork+=label([p[0]+32*(p[0]-o[0])/n,p[1]+32*(p[1]-o[1])/n],`${['X','Y','Z'][i]} · Δμ${e}`,axisColors[i],15);svg+=maskLineArtwork(`axis-${i}`,artwork,corner,end,surfaces,projection,camera.opacity??.75);
   });
   for(const [p,t,c] of annotations)svg+=label(p,t,c,13,'middle',true,true);
@@ -91,6 +91,6 @@ export function render3D(r,{camera=defaultCamera,selected=null,own=false,formula
   svg+='<g data-export-omit="true">';svg+=label([430,491],`${camera.showHost?'Pale plane: host equality + elemental limits   ·   ':''}Teal: allowed region`,'#5f7480',13);svg+='</g>';
   if(!vertices.length)svg+=label([430,245],'No feasible stability region','#a45a27',21);
   if(projection.edgeOn)svg+='<g data-export-omit="true">'+label([430,465],'Edge-on view — rotate to select an interior point','#a45a27',13)+'</g>';
-  if(camera.frontAxes)svg+=renderFrontAxes(projection);
+  if(camera.frontAxes)svg+=renderFrontAxes(projection,camera);
   return {svg:svg+'</svg>',projection};
 }

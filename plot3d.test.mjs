@@ -3,7 +3,19 @@ import assert from 'node:assert/strict';
 import {solve,examples} from './dist/engine.mjs';
 import {makeProjection,render3D,defaultCamera} from './dist/plot3d.mjs';
 import {frontEdges} from './dist/front-axes.mjs';
-import {ticks} from './dist/display.mjs';
+import {ticks,tickLabel} from './dist/display.mjs';
+test('tick labels support explicit decimals, size, and no negative zero',()=>{
+ assert.equal(tickLabel(-.001,1,2),'0.00');
+ assert.equal(tickLabel(-2,1,0),'-2');
+ assert.equal(tickLabel(-2,1,3),'-2.000');
+ const r=solve(examples.SrTiO3);
+ for(const showFaces of [false,true])for(const frontAxes of [false,true]){
+  const {svg}=render3D(r,{camera:{...defaultCamera,showFaces,frontAxes,tickFontSize:18,tickDecimals:3}});
+  assert.match(svg,/font-size="18"/);
+  assert.match(svg,/>0\.000<\/text>/);
+  assert.ok(!svg.includes('>-0.000</text>'));
+ }
+});
 test('phase-view axis limits match exact display bounds independently of tick spacing',()=>{
  const r=solve(examples.SrTiO3),bounds={Sr:[-11.05,0],Ti:[-13.05,0],O:[-9.05,0]};
  for(const frontAxes of [false,true])for(const tickInterval of [0,1,2,5]){

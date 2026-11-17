@@ -26,7 +26,7 @@ export function ticks([lo,hi],step){
   return Array.from({length:Math.max(0,Math.min(100,end-start+1))},(_,i)=>Number(((start+i)*step).toPrecision(12)));
 }
 export const roundRange=([lo,hi],step)=>[Math.floor(lo/step+1e-9)*step,Math.ceil(hi/step-1e-9)*step];
-export function tickLabel(value,step){const digits=Math.min(10,Math.max(2,Math.ceil(-Math.log10(step))+1));return (Math.abs(value)<step*1e-8?0:value).toFixed(digits);}
+export function tickLabel(value,step,decimals=-1){const digits=Number.isInteger(decimals)&&decimals>=0&&decimals<=3?decimals:Math.min(10,Math.max(2,Math.ceil(-Math.log10(step))+1));const label=value.toFixed(digits);return Number(label)===0?(0).toFixed(digits):label;}
 export function layout2D(raw,width,height,{tickInterval=0,equalScale=true}={}){
   let ranges=raw.map(([lo,hi])=>{const pad=Math.max(.5,hi-lo)*.16;return [lo-pad,Math.min(0,hi+pad)];});
   let step=tickStep(ranges,tickInterval);ranges=ranges.map(a=>roundRange(a,step));

@@ -23,7 +23,7 @@ export function frontEdges(p){
   }).filter(Boolean);
 }
 
-export function renderFrontAxes(p){
+export function renderFrontAxes(p,{tickFontSize=12,tickDecimals=-1}={}){
   let svg='<g data-front-axes="true" fill="#243746" stroke="#243746" font-family="system-ui">';
   for(const q of frontEdges(p)){
     const {e,i,a,u,v,normal:n,mid}=q;
@@ -32,7 +32,7 @@ export function renderFrontAxes(p){
       const s=p.project({...a,[e]:t});
       svg+=`<line data-axis-tick="${i}" x1="${s[0]}" y1="${s[1]}" x2="${s[0]+5*n[0]}" y2="${s[1]+5*n[1]}" stroke-width="1"/>`;
       const anchor=n[0]<-.3?'end':n[0]>.3?'start':'middle';
-      svg+=`<text x="${s[0]+10*n[0]}" y="${s[1]+10*n[1]}" dominant-baseline="middle" text-anchor="${anchor}" font-size="11" stroke="white" stroke-width="2" paint-order="stroke">${tickLabel(t,p.interval)}</text>`;
+      svg+=`<text x="${s[0]+10*n[0]}" y="${s[1]+10*n[1]}" dominant-baseline="middle" text-anchor="${anchor}" font-size="${tickFontSize}" stroke="white" stroke-width="2" paint-order="stroke">${tickLabel(t,p.interval,tickDecimals)}</text>`;
     }
     svg+=`<text data-plot-label="axis" x="${mid[0]+52*n[0]}" y="${mid[1]+52*n[1]}" dominant-baseline="middle" text-anchor="middle" font-size="13" stroke="white" stroke-width="3" paint-order="stroke">${potentialSVG(`Δμ${e}`)} (eV / atom)</text>`;
   }
