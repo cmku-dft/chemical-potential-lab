@@ -27,7 +27,7 @@ export function renderBinary(r,{view='1d',camera={},selected=null,own=false,form
   svg+=text((L+W-R)/2,H-22,potentialSVG(`Δμ${r.x}`)+' (eV / atom)','axis');
   if(!interval)svg+=`<g transform="translate(22 ${(T+H-B)/2}) rotate(-90)">${text(0,0,potentialSVG(`Δμ${r.y}`)+' (eV / atom)','axis')}</g>`;
   if(!r.vertices.length)svg+=text(W/2,H/2,'No stable host interval');
-  svg+=`<text x="${W-R}" y="20" text-anchor="end" font-family="system-ui" font-size="11" fill="#71858e">${own?'USER-SUPPLIED ENERGIES':'ILLUSTRATIVE ENERGIES'}</text></svg>`;
+  svg+=`</svg>`;
   const unproject=([x,y])=>{
     if(interval||r.vertices.length!==2)return r.pointAt(xr[0]+(x-L)/(W-L-R)*(xr[1]-xr[0]));
     const [a,b]=r.vertices.map(project),dx=b[0]-a[0],dy=b[1]-a[1],t=((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy);

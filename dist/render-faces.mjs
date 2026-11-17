@@ -1,3 +1,4 @@
+import {renderFrontAxes} from './front-axes.mjs';
 import {maskLineArtwork} from './occlusion.mjs';
 import {potentialSVG,potentialText,ticks,tickLabel,formulaSVG,formulaText} from './display.mjs';
 import {pickFace} from './faces3d.mjs';
@@ -7,7 +8,7 @@ export const faceColor=face=>face.kind==='host'?'#eb8fcd':face.kind==='element'?
 const labelOf=face=>face.labels.map(t=>t.replace(' elemental limit',' (element)')).join(' / ');
 const equation=row=>Object.entries(row.counts).map(([e,n])=>`${n===1?'':n}Δμ${e}`).join(' + ')+` = ${row.enthalpy.toFixed(4)} eV/formula`;
 
-export function renderPhaseSpace(r,space,p,{selected,own,formula,opacity=.75}){
+export function renderPhaseSpace(r,space,p,{selected,own,formula,opacity=.75,frontAxes=false}){
   const {axes,ranges,project}=p,point=mu=>project(mu).join(','),occupied=[];
   const line=(a,b,stroke,width=1,dash='')=>`<line x1="${project(a)[0]}" y1="${project(a)[1]}" x2="${project(b)[0]}" y2="${project(b)[1]}" stroke="${stroke}" stroke-width="${width}" ${dash?`stroke-dasharray="${dash}"`:''}/>`;
   const text=(pos,value,fill='#264655',size=13,anchor='middle',avoid=false,chemical=false)=>{
@@ -41,7 +42,7 @@ export function renderPhaseSpace(r,space,p,{selected,own,formula,opacity=.75}){
   // only where the host/face is actually the nearest physical surface.
   const visible=(mu,face)=>{const hit=pickFace(space,p,project(mu));return hit&&(hit.face===face||Math.abs(hit.depth-p.depth(mu))<space.tolerance*8);};
   const axisColors=['#386bb8','#aa6422','#8853a1'];
-  axes.forEach((e,i)=>{
+  if(!frontAxes)axes.forEach((e,i)=>{
     const end={...corner,[e]:ranges[i][1]};let artwork=line(corner,end,axisColors[i],2);
     for(const value of ticks(ranges[i],p.interval)){const pos=project({...corner,[e]:value});artwork+=`<circle cx="${pos[0]}" cy="${pos[1]}" r="2" fill="${axisColors[i]}"/>`;artwork+=text([pos[0]+(i===2?-10:0),pos[1]+(i===2?4:17)],tickLabel(value,p.interval),axisColors[i],12,i===2?'end':'middle');}
     const q=project(end),o=project(corner),length=Math.hypot(q[0]-o[0],q[1]-o[1])||1;
@@ -68,7 +69,7 @@ export function renderPhaseSpace(r,space,p,{selected,own,formula,opacity=.75}){
   for(const face of [...space.faces].sort((a,b)=>(b.kind==='host')-(a.kind==='host'))){const mu=center(face);if(!visible(mu,face))continue;svg+=text(project(mu),labelOf(face),face.kind==='host'?'#7e155c':'#1d4268',face.kind==='host'?15:14,'middle',true,true);}
   svg+='<g data-export-omit="true">';svg+=text([430,475],'Pink: host stability · Other colors: competing-phase faces','#425f70',13);
   svg+=text([430,496],'Display bounds trim the faces; they do not set the host stability limits.','#657b86',12);svg+='</g>';
-  svg+=text([842,45],own?'USER-SUPPLIED ENERGIES':'ILLUSTRATIVE ENERGIES','#71858e',11,'end');
   if(!space.faces.length)svg+=text([430,245],'No phase faces inside these display bounds.','#a45a27',19);
+  if(frontAxes)svg+=renderFrontAxes(p);
   return svg+'</svg>';
 }

@@ -2,6 +2,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {solve,examples} from './dist/engine.mjs';
 import {makeProjection,render3D,defaultCamera} from './dist/plot3d.mjs';
+import {frontEdges} from './dist/front-axes.mjs';
+test('front-edge publication axes use silhouette edges and preserve projection',()=>{
+ const r=solve(examples.SrTiO3);
+ for(const azimuth of [-135,-45,45,135])for(const elevation of [-30,25])for(const showFaces of [true,false]){
+  const camera={...defaultCamera,azimuth,elevation,showFaces};
+  const normal=render3D(r,{camera}),front=render3D(r,{camera:{...camera,frontAxes:true},own:true});
+  assert.equal(frontEdges(front.projection).length,3);
+  assert.ok(frontEdges(front.projection).every(e=>e.silhouette));
+  assert.deepEqual(front.projection.ranges,normal.projection.ranges);
+  assert.ok(front.svg.includes('data-front-axes="true"'));
+  assert.ok(front.svg.includes('data-axis-tick="2"'));
+  assert.ok(!/USER-SUPPLIED ENERGIES|ILLUSTRATIVE ENERGIES|NaN|undefined/.test(front.svg));
+ }
+});
 const permutations=a=>a.length===1?[a]:a.flatMap((e,i)=>permutations(a.filter((_,j)=>j!==i)).map(t=>[e,...t]));
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`);
 test('all six axis orders preserve the 3D feasible set for both examples',()=>{for(const example of Object.values(examples)){const base=solve(example);for(const axes of permutations(base.elements)){const r=solve({...example,axes});assert.deepEqual([r.x,r.y,r.z],axes);assert.equal(r.vertices.length,base.vertices.length);for(const p of base.vertices){const m=base.chemicalPotentials(p);assert.ok(r.vertices.some(q=>base.elements.every(e=>Math.abs(r.chemicalPotentials(q)[e]-m[e])<1e-7)));}}}});
